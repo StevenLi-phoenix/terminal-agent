@@ -1,0 +1,74 @@
+# terminal-agent configuration.
+# Copy to config.yaml and fill in. config.yaml is gitignored.
+# The agent looks for ./config.yaml by default; override with
+#   TERMINAL_AGENT_CONFIG=/path/to/config.yaml
+
+# Bridge WebSocket endpoint (the CF Worker DO route).
+server: wss://mcp.lishuyu.app/mcp/terminal/ws
+
+# Pre-shared token. ${VAR} is substituted from the environment, so you can
+# keep the value out of the file: export TERMINAL_AGENT_TOKEN=... in your
+# shell / launchd plist. Must equal the Worker's TERMINAL_TOKEN secret.
+token: ${TERMINAL_AGENT_TOKEN}
+
+# Human-readable machine label, surfaced in _system and terminal_status.
+machine: mac-mini-m4
+
+# Starting mode: read-only | read-write | bypass. read-only is the safe
+# default; switch at runtime via the switch_mode tool + confirmation code.
+mode: read-only
+
+# On a switch_mode request, push a macOS notification (osascript) carrying the
+# confirmation code, so you get it on your Mac instead of grepping a log. The
+# cloud AI can't see the notification, so the anti-self-escalation gate holds.
+# macOS only; ignored elsewhere.
+notify_on_switch: true
+
+# Elevated privilege is temporary: read-write/bypass auto-reverts to read-only
+# after this many ms (default 10 min), so a forgotten elevation can't stay open.
+# Each switch_mode resets the clock; 0 disables auto-revert (stays elevated until
+# you switch back or the agent restarts — a launchd restart also resets to mode:).
+elevation_timeout_ms: 600000
+
+# Default working directory for relative paths and run_command.
+default_cwd: ~/Codes
+
+# run_command stdout+stderr cap (bytes) and wall-clock timeout (ms).
+max_output_bytes: 8192
+command_timeout_ms: 20000
+
+# Reads (read_file / search_files / list_directory) are confined to these
+# roots, checked AFTER resolving symlinks — out-of-tree files (e.g. /etc,
+# ~/.config, another user's home) are simply unreadable. This is the primary
+# boundary; the secret blocklist is defense-in-depth behind it. Empty → just
+# default_cwd. Add ~/Downloads, ~/Documents, etc. if you want to read them.
+allowed_read_dirs:
+  - ~/Codes
+
+# read-write / bypass mode may only write under these directories (also
+# symlink-resolved; a symlink leaf or symlinked dir cannot escape them).
+allowed_write_dirs:
+  - ~/Codes
+  - ~/Downloads
+  - /tmp
+
+# Extra blocked-path globs, ADDED to the built-in hard blocklist
+# (.env*, .ssh/**, *.pem, *.key, *secret*, *credential*, .aws/.kube/**, …),
+# which is always on and cannot be disabled. Tip: add any project-specific
+# secret-bearing files whose NAME isn't obviously a credential (e.g.
+# config.json / application.yml / wrangler.toml that hold tokens), since the
+# built-in blocklist keys off credential-ish names and those would otherwise
+# be readable within an allowed_read_dirs project.
+blocked_paths:
+  - "**/private/**"
+
+# Exact secret strings to redact wherever they appear in output (≥8 chars).
+# Use for values that don't match the built-in token regexes (router
+# passwords, account SIDs, custom token formats, internal hostnames).
+secret_literals: []
+
+# Optional: additional binaries permitted by run_command in read-only mode.
+# Leave empty unless you understand the risk. Arbitrary-code-exec binaries
+# (python -c, node -e, perl -e, …) are intentionally NOT whitelisted by
+# default — they bypass read-only. Add them here only if you accept that.
+extra_read_binaries: []

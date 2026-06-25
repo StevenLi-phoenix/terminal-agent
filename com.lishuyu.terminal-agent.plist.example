@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  launchd user agent for terminal-agent.
+
+  Install:
+    cp com.lishuyu.terminal-agent.plist.example \
+       ~/Library/LaunchAgents/com.lishuyu.terminal-agent.plist
+    # edit the absolute paths + token below, then:
+    chmod 600 ~/Library/LaunchAgents/com.lishuyu.terminal-agent.plist
+    launchctl load ~/Library/LaunchAgents/com.lishuyu.terminal-agent.plist
+
+  The token lives in this plist's environment. The file is under your home
+  LaunchAgents dir and chmod 600 — readable only by you. If you prefer it
+  out of a file entirely, drop the TERMINAL_AGENT_TOKEN block and instead
+  wrap the ProgramArguments in a script that fetches it from the macOS
+  keychain (`security find-generic-password -w …`).
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.lishuyu.terminal-agent</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/lishuyu/.bun/bin/bun</string>
+        <string>run</string>
+        <string>/Users/lishuyu/Codes/terminal-agent/src/index.ts</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/lishuyu/Codes/terminal-agent</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>TERMINAL_AGENT_TOKEN</key>
+        <string>REPLACE_WITH_YOUR_TOKEN</string>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/lishuyu/Codes/terminal-agent/agent.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/lishuyu/Codes/terminal-agent/agent.err.log</string>
+</dict>
+</plist>
