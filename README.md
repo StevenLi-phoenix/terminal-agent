@@ -1,3 +1,5 @@
+# AS 2026.Nov. This has become offical for anthropic desktop app, thus, no longer maintained.
+
 # terminal-agent
 
 Local daemon for the **terminal MCP bridge**. It connects *outbound* over a
